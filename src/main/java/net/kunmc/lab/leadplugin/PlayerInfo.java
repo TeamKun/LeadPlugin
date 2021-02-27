@@ -16,12 +16,13 @@ public class PlayerInfo {
 
     public PlayerInfo(Entity myOriginInfo, Location loc) {
         this.myOriginInfo = myOriginInfo;
-        holder = myOriginInfo.getName();
+        holder = null;
         isHolder = false;
         isTarget = false;
         power = 0.8;
         isCoolTime = false;
         this.loc = loc;
+        dummy = null;
     }
 
     public Entity getMyOriginInfo() {

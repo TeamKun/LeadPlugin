@@ -36,12 +36,14 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
         } catch (Exception e) {
             getLogger().info("configが正しく読まれませんでした");
         }
+
         players = new HashMap<String, PlayerInfo>();
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
             @Override
             public void run() {
                 getServer().getOnlinePlayers().forEach(player -> {
+
                     if(!players.containsKey(player.getName())) {
                         players.put(player.getName(), new PlayerInfo(player, player.getLocation()));
                     }
@@ -50,13 +52,17 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
                     if(playerInfo.isHolder()) {
                         playerInfo.setIsHolder(false);
                         players.forEach((targetName, targetInfo) -> {
+                            if(player.getName().equals(targetName)) {
+                                return;
+                            }
                             if(targetInfo.getMyOriginInfo().getType() == EntityType.RABBIT) {
                                 return;
                             }
                             if(!targetInfo.isTarget()) {
+                                release(targetInfo);
                                 return;
                             }
-                            if(targetInfo.getHolderName().equals(player.getName())) {
+                            if(targetInfo.getHolderName() != null && targetInfo.getHolderName().equals(player.getName())) {
                                 playerInfo.setIsHolder(true);
                                 adjustLoc(player, playerInfo, targetName);
                             }
@@ -65,14 +71,19 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
                     }
 
                     if(playerInfo.isTarget()) {
-                        if(!players.containsKey(playerInfo.getHolderName())) {
+                        if(playerInfo.getHolderName() != null && !players.containsKey(playerInfo.getHolderName())) {
+                            release(playerInfo);
                             return;
                         }
                         if(playerInfo.getMyOriginInfo().getType() == EntityType.RABBIT) {
                             return;
                         }
-                        PlayerInfo holderInfo = players.get(playerInfo.getHolderName());
-                        adjustLoc(holderInfo.getMyOriginInfo(), holderInfo, player.getName());
+                        if(playerInfo.getHolderName() != null) {
+                            PlayerInfo holderInfo = players.get(playerInfo.getHolderName());
+                            adjustLoc(holderInfo.getMyOriginInfo(), holderInfo, player.getName());
+                            return;
+                        }
+                        release(playerInfo);
                     }
 
                 });
@@ -110,8 +121,12 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
             }
         }
 
-        if(!players.containsKey(player.getName()) || !players.containsKey(targetName)) {
-            return;
+        if(!players.containsKey(player.getName())) {
+            players.put(player.getName(), new PlayerInfo(player, player.getLocation()));
+        }
+
+        if(!players.containsKey(targetName)) {
+            players.put(targetName, new PlayerInfo(target, target.getLocation()));
         }
 
         PlayerInfo playerInfo = players.get(player.getName());
@@ -122,9 +137,12 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
 
         if(canLeashOrRelease(player, playerInfo, targetInfo, false)) {
             playerInfo.setIsHolder(true);
+            targetInfo.setIsHolder(false);
+
+            playerInfo.setIsTarget(false);
             targetInfo.setIsTarget(true);
 
-            playerInfo.setHolderName(player.getName());
+            playerInfo.setHolderName(null);
             targetInfo.setHolderName(player.getName());
 
             playerInfo.setLoc(player.getLocation());
@@ -143,7 +161,7 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
         }
 
         if(canLeashOrRelease(player, playerInfo, targetInfo, true)) {
-            release(targetInfo, targetName);
+            release(targetInfo);
             setCoolTime(playerInfo);
         }
     }
@@ -152,7 +170,7 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
     public void onPlayerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
         if(!players.containsKey(player.getName())) {
-            return;
+            players.put(player.getName(), new PlayerInfo(player, player.getLocation()));
         }
         if(event.getAction() != Action.LEFT_CLICK_AIR && event.getAction() != Action.LEFT_CLICK_BLOCK) {
             return;
@@ -174,7 +192,7 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
                 if(!targetInfo.isTarget()) {
                     return;
                 }
-                if(targetInfo.getHolderName().equals(player.getName())) {
+                if(targetInfo.getHolderName() != null && targetInfo.getHolderName().equals(player.getName())) {
                     pull(player, targetInfo.getMyOriginInfo(), playerInfo.getPower());
                 }
             });
@@ -182,12 +200,15 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
             return;
         }
         if(playerInfo.isTarget()) {
-            if(!players.containsKey(playerInfo.getHolderName())) {
+            if(playerInfo.getHolderName() != null && !players.containsKey(playerInfo.getHolderName())) {
+                release(playerInfo);
                 return;
             }
-            Entity holder = players.get(playerInfo.getHolderName()).getMyOriginInfo();
-            pull(player, holder, playerInfo.getPower());
-            setCoolTime(playerInfo);
+            if(playerInfo.getHolderName() != null) {
+                PlayerInfo holderInfo = players.get(playerInfo.getHolderName());
+                pull(player, holderInfo.getMyOriginInfo(), playerInfo.getPower());
+                setCoolTime(playerInfo);
+            }
         }
     }
 
@@ -264,7 +285,7 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
 
         if(player.getLocation().distance(target.getLocation()) >= 15) {
             if(targetInfo.isTarget()) {
-                release(targetInfo, targetName);
+                release(targetInfo);
                 return;
             }
             return;
@@ -287,14 +308,17 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
         addPotionEffect(targetInfo.getDummy());
     }
 
-    private void release(PlayerInfo targetInfo, String targetName) {
-        targetInfo.setHolderName(targetName);
+    private void release(PlayerInfo targetInfo) {
+        targetInfo.setIsHolder(false);
+        targetInfo.setHolderName(null);
         targetInfo.setIsTarget(false);
 
         LivingEntity dummy = targetInfo.getDummy();
-        targetInfo.setDummy(null);
-        dummy.setLeashHolder(null);
-        dummy.setHealth(0);
+        if(dummy != null) {
+            targetInfo.setDummy(null);
+            dummy.setLeashHolder(null);
+            dummy.setHealth(0);
+        }
     }
 
     private void playerDeathOrQuit(String playerName) {
@@ -307,14 +331,14 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
                 if(!targetInfo.isTarget()) {
                     return;
                 }
-                if(targetInfo.getHolderName().equals(playerName)) {
-                    release(targetInfo, targetName);
+                if(targetInfo.getHolderName() != null && targetInfo.getHolderName().equals(playerName)) {
+                    release(targetInfo);
                 }
             });
             return;
         }
         if(playerInfo.isTarget()) {
-            release(playerInfo, playerName);
+            release(playerInfo);
         }
     }
 
