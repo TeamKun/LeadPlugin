@@ -33,54 +33,23 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
         } catch (Exception e) {
             getLogger().info("configが正しく読まれませんでした");
         }
-
         players = new HashMap<String, PlayerInfo>();
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
             @Override
             public void run() {
                 getServer().getOnlinePlayers().forEach(player -> {
-
                     if(!players.containsKey(player.getName())) {
                         players.put(player.getName(), new PlayerInfo(player, player.getLocation()));
-                    }
-                    PlayerInfo playerInfo = players.get(player.getName());
-
-                    if(playerInfo.isHolder()) {
-                        playerInfo.setIsHolder(false);
-                        players.forEach((targetName, targetInfo) -> {
-                            if(player.getName().equals(targetName)) {
-                                return;
-                            }
-                            if(targetInfo.getMyOriginInfo().getType() == EntityType.RABBIT) {
-                                return;
-                            }
-                            if(!targetInfo.isTarget()) {
-                                release(targetInfo);
-                                return;
-                            }
-                            if(targetInfo.getHolderName() != null && targetInfo.getHolderName().equals(player.getName())) {
-                                playerInfo.setIsHolder(true);
-                                adjustLoc(player, playerInfo, targetName);
-                            }
-                        });
                         return;
                     }
-
+                    PlayerInfo playerInfo = players.get(player.getName());
+                    if(playerInfo.isHolder()) {
+                        adjustLoc(playerInfo, players.get(playerInfo.getTargetName()));
+                        return;
+                    }
                     if(playerInfo.isTarget()) {
-                        if(playerInfo.getHolderName() != null && !players.containsKey(playerInfo.getHolderName())) {
-                            release(playerInfo);
-                            return;
-                        }
-                        if(playerInfo.getMyOriginInfo().getType() == EntityType.RABBIT) {
-                            return;
-                        }
-                        if(playerInfo.getHolderName() != null) {
-                            PlayerInfo holderInfo = players.get(playerInfo.getHolderName());
-                            adjustLoc(holderInfo.getMyOriginInfo(), holderInfo, player.getName());
-                            return;
-                        }
-                        release(playerInfo);
+                        adjustLoc(playerInfo, players.get(playerInfo.getHolderName()));
                     }
 
                 });
@@ -97,42 +66,29 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
     public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
         Player player = event.getPlayer();
         Entity target = event.getRightClicked();
-
-        if(target.getType() == EntityType.RABBIT) {
-            return;
-        }
-
+        // if(target.getType() == EntityType.RABBIT || target.getType() == EntityType.SLIME || target.getType() == EntityType.MAGMA_CUBE || !(target instanceof LivingEntity)) { return; }
         String targetName;
-
         if(event.getRightClicked() instanceof Player) {
             targetName = target.getName();
         } else {
+            return;
+            /*
             if(!players.containsKey(target.getCustomName())) {
                 int r = (int) (Math.random() * 1000 + 1);
                 target.setCustomNameVisible(false);
-                target.setCustomName(player.getName() + "_" + ((target.getEntityId() + 1) * r + "号"));
+                target.setCustomName(player.getName() + "_" + ((target.getEntityId() + 1) * r));
                 targetName = target.getCustomName();
                 players.put(target.getCustomName(), new PlayerInfo(target, target.getLocation()));
             } else {
                 targetName = target.getCustomName();
             }
+            */
         }
-
-        if(!players.containsKey(player.getName())) {
-            players.put(player.getName(), new PlayerInfo(player, player.getLocation()));
-        }
-
-        if(!players.containsKey(targetName)) {
-            players.put(targetName, new PlayerInfo(target, target.getLocation()));
-        }
-
         PlayerInfo playerInfo = players.get(player.getName());
-        if (playerInfo.isCoolTime()) {
-            return;
-        }
+        if (playerInfo.isCoolTime()) { return; }
         PlayerInfo targetInfo = players.get(targetName);
 
-        if(canLeashOrRelease(player, playerInfo, targetInfo, false)) {
+        if(canLeashOrRelease(playerInfo, targetInfo, player.getName(), false)) {
             playerInfo.setIsHolder(true);
             targetInfo.setIsHolder(false);
 
@@ -141,6 +97,9 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
 
             playerInfo.setHolderName(null);
             targetInfo.setHolderName(player.getName());
+
+            playerInfo.setTargetName(targetName);
+            targetInfo.setTargetName(null);
 
             playerInfo.setLoc(player.getLocation());
             targetInfo.setLoc(target.getLocation());
@@ -157,7 +116,8 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
             return;
         }
 
-        if(canLeashOrRelease(player, playerInfo, targetInfo, true)) {
+        if(canLeashOrRelease(playerInfo, targetInfo, player.getName(), true)) {
+            release(playerInfo);
             release(targetInfo);
             setCoolTime(playerInfo);
         }
@@ -166,46 +126,23 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
-        if(!players.containsKey(player.getName())) {
-            players.put(player.getName(), new PlayerInfo(player, player.getLocation()));
-        }
-        if(event.getAction() != Action.LEFT_CLICK_AIR && event.getAction() != Action.LEFT_CLICK_BLOCK) {
-            return;
-        }
-
+        if(event.getAction() != Action.LEFT_CLICK_AIR && event.getAction() != Action.LEFT_CLICK_BLOCK) { return; }
         PlayerInventory pi = player.getInventory();
-
-        if(pi.getItemInMainHand().getType() != Material.AIR) {
-            return;
-        }
+        if(pi.getItemInMainHand().getType() != Material.AIR) { return; }
 
         PlayerInfo playerInfo = players.get(player.getName());
-        if(playerInfo.isCoolTime()) {
-            return;
-        }
+        if(playerInfo.isCoolTime()) { return; }
 
         if(playerInfo.isHolder()) {
-            players.forEach((targetName, targetInfo) -> {
-                if(!targetInfo.isTarget()) {
-                    return;
-                }
-                if(targetInfo.getHolderName() != null && targetInfo.getHolderName().equals(player.getName())) {
-                    pull(player, targetInfo.getMyOriginInfo(), playerInfo.getPower());
-                }
-            });
+            PlayerInfo targetInfo = players.get(playerInfo.getTargetName());
+            pull(player, targetInfo.getMyOriginInfo(), playerInfo.getPower());
             setCoolTime(playerInfo);
             return;
         }
         if(playerInfo.isTarget()) {
-            if(playerInfo.getHolderName() != null && !players.containsKey(playerInfo.getHolderName())) {
-                release(playerInfo);
-                return;
-            }
-            if(playerInfo.getHolderName() != null) {
-                PlayerInfo holderInfo = players.get(playerInfo.getHolderName());
-                pull(player, holderInfo.getMyOriginInfo(), playerInfo.getPower());
-                setCoolTime(playerInfo);
-            }
+            PlayerInfo holderInfo = players.get(playerInfo.getHolderName());
+            pull(player, holderInfo.getMyOriginInfo(), playerInfo.getPower());
+            setCoolTime(playerInfo);
         }
     }
 
@@ -219,54 +156,39 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
         if(event.getEntity() instanceof Player) {
             playerName = event.getEntity().getName();
         } else {
+            return;
+        }
+        /*
+        else if (event.getEntity().getCustomName() != null) {
             playerName = event.getEntity().getCustomName();
         }
+        */
         playerDeathOrQuit(playerName);
     }
 
     @EventHandler
-    public void onPlayerQuit(PlayerQuitEvent event) {
-        playerDeathOrQuit(event.getPlayer().getName());
-    }
+    public void onPlayerQuit(PlayerQuitEvent event) { playerDeathOrQuit(event.getPlayer().getName()); }
 
     @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        players.put(event.getPlayer().getName(), new PlayerInfo(event.getPlayer(), event.getPlayer().getLocation()));
-    }
+    public void onPlayerJoin(PlayerJoinEvent event) { players.put(event.getPlayer().getName(), new PlayerInfo(event.getPlayer(), event.getPlayer().getLocation())); }
 
     @EventHandler
-    public void onPlayerLeash(PlayerLeashEntityEvent event) {
-        event.setCancelled(true);
-    }
+    public void onPlayerLeash(PlayerLeashEntityEvent event) { event.setCancelled(true); }
 
     @EventHandler
-    public void onPlayerUnLeash(PlayerUnleashEntityEvent event) {
-        event.setCancelled(true);
-    }
+    public void onPlayerUnLeash(PlayerUnleashEntityEvent event) { event.setCancelled(true); }
 
     @EventHandler
     public void onItemSpawn(ItemSpawnEvent event) {
         Material material = event.getEntity().getItemStack().getType();
-        if(material == Material.RABBIT || material == Material.RABBIT_FOOT || material == Material.RABBIT_HIDE) {
-            event.setCancelled(true);
-        }
+        if(material == Material.RABBIT || material == Material.RABBIT_FOOT || material == Material.RABBIT_HIDE) { event.setCancelled(true); }
     }
 
 
-    private boolean canLeashOrRelease(Player player, PlayerInfo playerInfo, PlayerInfo targetInfo, boolean isRelease) {
-        if(isRelease) {
-            if (playerInfo.isTarget() || !targetInfo.isTarget()) {
-                return false;
-            }
-            return playerInfo.isHolder();
-        } else {
-            if (playerInfo.isTarget() || targetInfo.isTarget()) {
-                return false;
-            }
-            if (targetInfo.isHolder()) {
-                return false;
-            }
-        }
+    private boolean canLeashOrRelease(PlayerInfo playerInfo, PlayerInfo targetInfo, String holderName, boolean isRelease) {
+        Player player = (Player) playerInfo.getMyOriginInfo();
+        if(isRelease) { return playerInfo.isHolder() && targetInfo.isTarget() && targetInfo.getHolderName().equals(holderName); }
+        if(playerInfo.isHolder() || playerInfo.isTarget() || targetInfo.isHolder() || targetInfo.isTarget()) { return false; }
         PlayerInventory pi = player.getInventory();
         return pi.getItemInMainHand().getType() == Material.LEAD || pi.getItemInOffHand().getType() == Material.LEAD;
     }
@@ -275,24 +197,18 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
         playerInfo.setIsCoolTime(true);
         getServer().getScheduler().runTaskLater(this, new Runnable() {
             @Override
-            public void run() {
-                playerInfo.setIsCoolTime(false);
-            }
+            public void run() { playerInfo.setIsCoolTime(false); }
         }, 2L);
     }
 
-    private void adjustLoc(Entity player, PlayerInfo playerInfo, String targetName) {
-        PlayerInfo targetInfo = players.get(targetName);
+    private void adjustLoc(PlayerInfo playerInfo, PlayerInfo targetInfo) {
+        Entity player = playerInfo.getMyOriginInfo();
         Entity target = targetInfo.getMyOriginInfo();
-
         if(player.getLocation().distance(target.getLocation()) >= 15) {
-            if(targetInfo.isTarget()) {
-                release(targetInfo);
-                return;
-            }
+            release(playerInfo);
+            release(targetInfo);
             return;
         }
-
         if(player.getLocation().distance(target.getLocation()) >= 9.9) {
             player.teleport(playerInfo.getLoc());
             target.teleport(targetInfo.getLoc());
@@ -300,48 +216,38 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
             addPotionEffect(targetInfo.getDummy());
             return;
         }
-
         if(player.getLocation().distance(target.getLocation()) < 9.9) {
             playerInfo.setLoc(player.getLocation());
             targetInfo.setLoc(target.getLocation());
         }
-
         targetInfo.getDummy().teleport(target.getLocation());
         addPotionEffect(targetInfo.getDummy());
     }
 
-    private void release(PlayerInfo targetInfo) {
-        targetInfo.setIsHolder(false);
-        targetInfo.setHolderName(null);
-        targetInfo.setIsTarget(false);
-
-        LivingEntity dummy = targetInfo.getDummy();
+    private void release(PlayerInfo playerInfo) {
+        playerInfo.setIsHolder(false);
+        playerInfo.setHolderName(null);
+        playerInfo.setTargetName(null);
+        playerInfo.setIsTarget(false);
+        LivingEntity dummy = playerInfo.getDummy();
         if(dummy != null) {
-            targetInfo.setDummy(null);
+            playerInfo.setDummy(null);
             dummy.setLeashHolder(null);
             dummy.setHealth(0);
         }
     }
 
     private void playerDeathOrQuit(String playerName) {
-        if(!players.containsKey(playerName)) {
-            return;
-        }
         PlayerInfo playerInfo = players.get(playerName);
         if(playerInfo.isHolder()) {
-            players.forEach((targetName, targetInfo) -> {
-                if(!targetInfo.isTarget()) {
-                    return;
-                }
-                if(targetInfo.getHolderName() != null && targetInfo.getHolderName().equals(playerName)) {
-                    release(targetInfo);
-                }
-            });
-            return;
+            PlayerInfo targetInfo = players.get(playerInfo.getTargetName());
+            release(targetInfo);
         }
         if(playerInfo.isTarget()) {
-            release(playerInfo);
+            PlayerInfo holderInfo = players.get(playerInfo.getHolderName());
+            release(holderInfo);
         }
+        release(playerInfo);
     }
 
     private void addPotionEffect(LivingEntity dummy) {

@@ -7,6 +7,7 @@ import org.bukkit.entity.LivingEntity;
 public class PlayerInfo {
     private final Entity myOriginInfo;
     private String holder;
+    private String target;
     private boolean isHolder;
     private boolean isTarget;
     private double power;
@@ -17,6 +18,7 @@ public class PlayerInfo {
     public PlayerInfo(Entity myOriginInfo, Location loc) {
         this.myOriginInfo = myOriginInfo;
         holder = null;
+        target = null;
         isHolder = false;
         isTarget = false;
         power = 0.8;
@@ -35,6 +37,14 @@ public class PlayerInfo {
 
     public String getHolderName() {
         return holder;
+    }
+
+    public void setTargetName(String target) {
+        this.target = target;
+    }
+
+    public String getTargetName() {
+        return target;
     }
 
     public void setIsHolder(boolean isHolder) {
