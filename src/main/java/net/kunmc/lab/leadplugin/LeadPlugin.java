@@ -18,17 +18,18 @@ import java.util.HashMap;
 
 public final class LeadPlugin extends JavaPlugin implements Listener {
     private HashMap<String, PlayerInfo> infoMap;
-    private double holder_power = 0.8;
-    private double target_power = 0.2;
-    private double max_distance = 10;
-    private boolean lead_after_death = false;
-    private boolean lead_only_player = false;
+    double holder_power = 0.8;
+    double target_power = 0.2;
+    double max_distance = 10;
+    boolean lead_after_death = false;
+    boolean lead_only_player = false;
 
     @Override
     public void onEnable() {
         // Plugin startup logic
         infoMap = new HashMap<String, PlayerInfo>();
         config();
+        new CommandListener(this);
         getServer().getPluginManager().registerEvents(this, this);
         task();
     }

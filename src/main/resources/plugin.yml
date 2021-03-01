@@ -2,3 +2,8 @@ name: LeadPlugin
 version: ${project.version}
 main: net.kunmc.lab.leadplugin.LeadPlugin
 api-version: 1.15
+commands:
+  lead:
+    description: leadplugin.
+    usage: /<command> config
+    permission: op
