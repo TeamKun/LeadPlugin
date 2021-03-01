@@ -1,97 +1,67 @@
 package net.kunmc.lab.leadplugin;
 
-import org.bukkit.Location;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
 
 public class PlayerInfo {
-    private final Entity myOriginInfo;
-    private String holder;
-    private String target;
+    final private Entity origin;
+    private String pairName;
+    private boolean isLeashing;
     private boolean isHolder;
-    private boolean isTarget;
-    private double power;
-    private boolean isCoolTime;
-    private Location loc;
-    private LivingEntity dummy;
+    private boolean isCool;
+    private boolean isDead;
 
-    public PlayerInfo(Entity myOriginInfo, Location loc) {
-        this.myOriginInfo = myOriginInfo;
-        holder = null;
-        target = null;
+    public PlayerInfo(Entity origin) {
+        this.origin = origin;
+        pairName = null;
+        isLeashing = false;
         isHolder = false;
-        isTarget = false;
-        power = 0.8;
-        isCoolTime = false;
-        this.loc = loc;
-        dummy = null;
+        isCool = false;
+        isDead = false;
     }
 
-    public Entity getMyOriginInfo() {
-        return myOriginInfo;
+    public Entity getOrigin() {
+        return origin;
     }
 
-    public void setHolderName(String holder) {
-        this.holder = holder;
+    public String getPairName() {
+        return pairName;
     }
 
-    public String getHolderName() {
-        return holder;
-    }
-
-    public void setTargetName(String target) {
-        this.target = target;
-    }
-
-    public String getTargetName() {
-        return target;
-    }
-
-    public void setIsHolder(boolean isHolder) {
-        this.isHolder = isHolder;
+    public boolean isLeashing() {
+        return isLeashing;
     }
 
     public boolean isHolder() {
         return isHolder;
     }
 
-    public void setIsTarget(boolean isTarget) {
-        this.isTarget = isTarget;
-    }
-
-    public boolean isTarget() {
-        return isTarget;
-    }
-
-    public void setPower(double power) {
-        this.power = power;
-    }
-
-    public double getPower() {
-        return power;
-    }
-
-    public void setIsCoolTime(boolean isCoolTime) {
-        this.isCoolTime = isCoolTime;
+    public void setCool(boolean cool) {
+        isCool = cool;
     }
 
     public boolean isCoolTime() {
-        return isCoolTime;
+        return isCool;
     }
 
-    public void setLoc(Location loc) {
-        this.loc = loc;
+    public void release() {
+        pairName = null;
+        isLeashing = false;
+        isHolder = false;
+        isCool = false;
+        isDead = false;
     }
 
-    public Location getLoc() {
-        return loc;
+    public void leash(boolean isHolder, String pairName) {
+        this.pairName = pairName;
+        if(isHolder){this.isHolder=true;}
+        isLeashing = true;
     }
 
-    public void setDummy(LivingEntity dummy) {
-        this.dummy = dummy;
+    public void setDead(boolean dead) {
+        isDead = dead;
     }
 
-    public LivingEntity getDummy() {
-        return dummy;
+    public boolean isDead() {
+        return isDead;
     }
 }
