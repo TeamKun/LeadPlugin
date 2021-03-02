@@ -17,10 +17,14 @@
 - target_power  
 被捕縛者の手繰る力
 - max_distance  
-移動可能な距離
+移動可能な距離  
+- force_pull_power  
+最大距離まで移動した際の引き戻す力  
+- force_teleport_distance  
+強制的にテレポートされる距離  
 - lead_after_death  
 パートナーの死後、リスポーンした際に再度束縛するかどうか  
 - lead_only_player  
 プラグインの有効範囲をプレイヤーに限定するかどうか
-  
-  
+- particle  
+リードの見た目（パーティクル）

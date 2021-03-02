@@ -1,10 +1,13 @@
 package net.kunmc.lab.leadplugin;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Particle;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -49,6 +52,24 @@ public class CommandListener implements TabExecutor {
                     }
                     return true;
                 }
+                if(a[1].equals("force_pull_power")) {
+                    try {
+                        lp.force_pull_power = Double.parseDouble(a[2]);
+                        s.sendMessage("§a" + "force_pull_powerを" + a[2] + "にしました");
+                    } catch (Exception e) {
+                        s.sendMessage("無効な値です");
+                    }
+                    return true;
+                }
+                if(a[1].equals("force_teleport_distance")) {
+                    try {
+                        lp.force_teleport_distance = Double.parseDouble(a[2]);
+                        s.sendMessage("§a" + "force_teleport_distanceを" + a[2] + "にしました");
+                    } catch (Exception e) {
+                        s.sendMessage("無効な値です");
+                    }
+                    return true;
+                }
                 if(a[1].equals("lead_after_death")) {
                     try {
                         lp.lead_after_death = Boolean.parseBoolean(a[2]);
@@ -67,6 +88,17 @@ public class CommandListener implements TabExecutor {
                     }
                     return true;
                 }
+                if(a[1].equals("particle")) {
+                    try {
+                        if(!lp.setParticleType(a[2])){
+                            throw new Exception("");
+                        }
+                        s.sendMessage("§a" + "particleを" + a[2] + "にしました");
+                    } catch (Exception e) {
+                        s.sendMessage("無効な値です");
+                    }
+                    return true;
+                }
             }
         }
         return false;
@@ -79,14 +111,20 @@ public class CommandListener implements TabExecutor {
                 return Stream.of("config").filter(e -> e.startsWith(a[0])).collect(Collectors.toList());
             }
             if(a.length == 2 && a[0].equals("config")) {
-                return Stream.of("holder_power", "target_power", "max_distance", "lead_after_death", "lead_only_player")
+                return Stream.of("holder_power", "target_power", "max_distance", "force_pull_power","force_teleport_distance","lead_after_death", "lead_only_player", "particle")
                         .filter(e -> e.startsWith(a[1])).collect(Collectors.toList());
             }
-            if(a.length == 3 && (a[1].equals("holder_power") || a[1].equals("target_power") || a[1].equals("max_distance"))) {
+            if(a.length == 3 && (a[1].equals("holder_power") || a[1].equals("target_power") || a[1].equals("max_distance")
+            || a[1].equals("force_pull_power") || a[1].equals("force_teleport_distance"))) {
                 return Collections.singletonList("数値");
             }
             if(a.length == 3 && (a[1].equals("lead_after_death") || a[1].equals("lead_only_player"))) {
                 return Stream.of("true", "false").filter(e -> e.startsWith(a[2])).collect(Collectors.toList());
+            }
+            if(a.length == 3 && a[1].equals("particle")) {
+                ArrayList<String> particleNames = new ArrayList<String>();
+                Arrays.stream(Particle.values()).forEach( e -> particleNames.add(e.toString()));
+                return particleNames.stream().filter(e -> e.startsWith(a[2])).collect(Collectors.toList());
             }
         }
         return null;

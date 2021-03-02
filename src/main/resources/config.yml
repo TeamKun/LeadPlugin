@@ -1,5 +1,8 @@
 holder_power: 0.8
 target_power: 0.2
 max_distance: 10
+force_pull_power: 1
+force_teleport_distance: 20
 lead_after_death: false
 lead_only_player: false
+particle: "CRIT"

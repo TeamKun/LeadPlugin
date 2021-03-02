@@ -18,9 +18,12 @@ import java.util.HashMap;
 
 public final class LeadPlugin extends JavaPlugin implements Listener {
     private HashMap<String, PlayerInfo> infoMap;
+    private Particle particle = Particle.CRIT;
     double holder_power = 0.8;
     double target_power = 0.2;
     double max_distance = 10;
+    double force_pull_power = 1;
+    double force_teleport_distance = 20;
     boolean lead_after_death = false;
     boolean lead_only_player = false;
 
@@ -45,9 +48,21 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
             holder_power = config.getDouble("holder_power");
             target_power = config.getDouble("target_power");
             max_distance = config.getDouble("max_distance");
+            force_pull_power = config.getDouble("force_pull_power");
+            force_teleport_distance = config.getDouble("force_teleport_distance");
             lead_after_death = config.getBoolean("lead_after_death");
             lead_only_player = config.getBoolean("lead_only_player");
+            setParticleType(config.getString("particle"));
         } catch (Exception ignored) {
+        }
+    }
+
+    public boolean setParticleType(String particle_type) {
+        try {
+            particle = Particle.valueOf(particle_type);
+            return true;
+        } catch (Exception e) {
+            return false;
         }
     }
 
@@ -70,12 +85,12 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
                             setParticle(p.getLocation(), tInfo.getOrigin().getLocation(), pInfo.getPairName());
                         }
                         double distance = p.getLocation().distance(tInfo.getOrigin().getLocation());
-                        if(distance > max_distance * 2) {
+                        if(distance > force_teleport_distance) {
                             p.teleport(tInfo.getOrigin().getLocation());
                             return;
                         }
                         if(distance > max_distance) {
-                            pull(tInfo.getOrigin(), p,  1);
+                            pull(tInfo.getOrigin(), p,  force_pull_power);
                         }
                     }
                 });
@@ -88,7 +103,7 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
         outerLoop: for(double t = 0; t < max_distance; t++) {
             pl.add(dv);
             pl.add(0, 1, 0);
-            pl.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, pl, 1, 0,0, 0, 0);
+            pl.getWorld().spawnParticle(particle, pl, 1, 0,0, 0, 0);
             for(Entity e : pl.getChunk().getEntities()) {
                 if (e.getLocation().distance(pl) < 2 && (e instanceof LivingEntity)) {
                     boolean isTarget = false;
