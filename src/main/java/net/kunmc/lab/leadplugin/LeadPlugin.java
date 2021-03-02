@@ -22,7 +22,7 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
     double holder_power = 0.8;
     double target_power = 0.2;
     double max_distance = 10;
-    double force_pull_power = 1;
+    double force_pull_power = 0.1;
     double force_teleport_distance = 20;
     boolean lead_after_death = false;
     boolean lead_only_player = false;
@@ -66,6 +66,10 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
         }
     }
 
+    public Particle getParticle() {
+        return particle;
+    }
+
     private void task() {
         getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
             @Override
@@ -99,8 +103,8 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
     }
 
     private void setParticle(Location pl, Location tl, String tName) {
-        Vector dv = tl.toVector().subtract(pl.toVector()).normalize();
-        outerLoop: for(double t = 0; t < max_distance; t++) {
+        Vector dv = tl.toVector().subtract(pl.toVector()).normalize().multiply(0.5);
+        outerLoop: for(double t = 0; t < max_distance; t += 0.5) {
             pl.add(dv);
             pl.add(0, 1, 0);
             pl.getWorld().spawnParticle(particle, pl, 1, 0,0, 0, 0);
