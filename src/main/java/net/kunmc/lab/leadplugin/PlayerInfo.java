@@ -2,6 +2,8 @@ package net.kunmc.lab.leadplugin;
 
 import org.bukkit.entity.Entity;
 
+import java.util.UUID;
+
 public class PlayerInfo {
     final private Entity origin;
     private String pairName;
@@ -9,6 +11,8 @@ public class PlayerInfo {
     private boolean isHolder;
     private boolean isCool;
     private boolean isDead;
+    private boolean isAddWire;
+    private UUID wire;
 
     public PlayerInfo(Entity origin) {
         this.origin = origin;
@@ -17,6 +21,8 @@ public class PlayerInfo {
         isHolder = false;
         isCool = false;
         isDead = false;
+        isAddWire = false;
+        wire = null;
     }
 
     public Entity getOrigin() {
@@ -49,6 +55,7 @@ public class PlayerInfo {
         isHolder = false;
         isCool = false;
         isDead = false;
+        isAddWire = false;
     }
 
     public void leash(boolean isHolder, String pairName) {
@@ -63,5 +70,21 @@ public class PlayerInfo {
 
     public boolean isDead() {
         return isDead;
+    }
+
+    public void setAddWire(boolean addWire) {
+        isAddWire = addWire;
+    }
+
+    public boolean isAddWire() {
+        return isAddWire;
+    }
+
+    public void setWire(UUID wire) {
+        this.wire = wire;
+    }
+
+    public UUID getWire() {
+        return wire;
     }
 }

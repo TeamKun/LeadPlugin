@@ -3,6 +3,7 @@ package net.kunmc.lab.leadplugin;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
+import org.bukkit.Sound;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
@@ -15,10 +16,11 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 
 import java.util.HashMap;
+import java.util.UUID;
 
 public final class LeadPlugin extends JavaPlugin implements Listener {
     private HashMap<String, PlayerInfo> infoMap;
-    private Particle particle = Particle.CRIT;
+
     double holder_power = 0.8;
     double target_power = 0.2;
     double max_distance = 10;
@@ -26,6 +28,15 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
     double force_teleport_distance = 20;
     boolean lead_after_death = false;
     boolean lead_only_player = false;
+
+    boolean particle_mode = false;
+    private Particle particle = Particle.CRIT;
+
+    private WireAPI wireAPI;
+
+    public HashMap<String, PlayerInfo> getInfoMap() {
+        return infoMap;
+    }
 
     @Override
     public void onEnable() {
@@ -35,6 +46,7 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
         new CommandListener(this);
         getServer().getPluginManager().registerEvents(this, this);
         task();
+        wireAPI = new WireAPI(this);
     }
 
     @Override
@@ -52,7 +64,8 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
             force_teleport_distance = config.getDouble("force_teleport_distance");
             lead_after_death = config.getBoolean("lead_after_death");
             lead_only_player = config.getBoolean("lead_only_player");
-            setParticleType(config.getString("particle"));
+            particle_mode = config.getBoolean("particle_mode");
+            setParticleType(config.getString("particle_type"));
         } catch (Exception ignored) {
         }
     }
@@ -86,7 +99,11 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
                             if(pInfo.isDead() || tInfo.isDead()) { return; }
                         }
                         if(pInfo.isHolder()) {
-                            setParticle(p.getLocation(), tInfo.getOrigin().getLocation(), pInfo.getPairName());
+                            if(particle_mode) {
+                                setParticle(p.getLocation(), tInfo.getOrigin().getLocation(), pInfo.getPairName());
+                            } else {
+                                pInfo.setAddWire(true);
+                            }
                         }
                         double distance = p.getLocation().distance(tInfo.getOrigin().getLocation());
                         if(distance > force_teleport_distance) {
@@ -142,7 +159,8 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
         if(pInfo.isCoolTime()){return;}
         if(pInfo.isLeashing() && !pInfo.isHolder()) {return;}
         if(pInfo.isLeashing() && pInfo.isHolder()) {
-            if(tInfo.isLeashing() && tInfo.getPairName() != null && tInfo.getPairName().equals(p.getName())) {
+            if(tInfo.isLeashing() && tInfo.getPairName() != null && tInfo.getPairName().equals(pName)) {
+                wireAPI.removeWire(pInfo.getWire());
                 release(pInfo, tInfo);
                 setCoolTime(pInfo);
             }
@@ -150,6 +168,7 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
         }
         if(tInfo.isLeashing()) {return;}
         leash(pInfo, tInfo, pName, tName);
+        p.getWorld().playSound(t.getLocation(), Sound.ENTITY_LEASH_KNOT_PLACE, 1, 1);
         setCoolTime(pInfo);
     }
 
@@ -193,6 +212,10 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
     private void quit(PlayerInfo pInfo) {
         if(pInfo.isLeashing()) {
             PlayerInfo tInfo = infoMap.get(pInfo.getPairName());
+            if(!particle_mode) {
+                UUID wire = pInfo.isHolder() ? pInfo.getWire() : tInfo.getWire();
+                wireAPI.removeWire(wire);
+            }
             release(pInfo, tInfo);
         }
     }
@@ -200,6 +223,10 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
     private void death(PlayerInfo pInfo) {
         if(pInfo.isLeashing()) {
             PlayerInfo tInfo = infoMap.get(pInfo.getPairName());
+            if(!particle_mode) {
+                UUID wire = pInfo.isHolder() ? pInfo.getWire() : tInfo.getWire();
+                wireAPI.removeWire(wire);
+            }
             if(lead_after_death && pInfo.getOrigin() instanceof Player) {
                 pInfo.setDead(true);
                 return;

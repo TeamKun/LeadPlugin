@@ -7,3 +7,4 @@ commands:
     description: leadplugin.
     usage: /<command> config
     permission: op
+depend: [ProtocolLib, LeadWires]
