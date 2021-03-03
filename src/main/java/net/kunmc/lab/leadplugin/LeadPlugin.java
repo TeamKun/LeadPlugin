@@ -25,7 +25,7 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
     double target_power = 0.2;
     double max_distance = 10;
     double force_pull_power = 0.1;
-    double force_teleport_distance = 20;
+    double force_teleport_distance = 200;
     boolean lead_after_death = false;
     boolean lead_only_player = false;
 
@@ -111,12 +111,22 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
                             return;
                         }
                         if(distance > max_distance) {
-                            pull(tInfo.getOrigin(), p,  force_pull_power);
+                            double diff = distance - max_distance;
+                            double power = calcPower(diff);
+                            pull(tInfo.getOrigin(), p,  power);
                         }
                     }
                 });
             }
         }, 0L, 2L);
+    }
+
+    private double calcPower(double diff) {
+        double power = force_pull_power;
+        for(double i = 0; i < diff; i += force_pull_power) {
+            power += force_pull_power;
+        }
+        return power;
     }
 
     private void setParticle(Location pl, Location tl, String tName) {
