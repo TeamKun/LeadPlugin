@@ -170,7 +170,7 @@ public class CommandListener implements TabExecutor {
                         .filter(e -> e.startsWith(a[2])).collect(Collectors.toList());
             }
             if(a.length == 4 && (a[2].equals(holder_power) || a[2].equals(target_power) || a[2].equals(force_pull_power) || a[2].equals(max_distance)
-            || a[2].equals(force_teleport_distance))) {
+                    || a[2].equals(force_teleport_distance))) {
                 return Collections.singletonList("数値");
             }
             if(a.length == 4 && (a[2].equals(lead_after_death) || a[2].equals(lead_only_player) || a[2].equals(particle_mode))) {

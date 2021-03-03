@@ -141,7 +141,6 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
                     if(e instanceof Player) {
                         if(e.getName().equals(tName)) {isTarget = true; }
                     } else {
-                        if(lead_only_player) { continue; }
                         if(("No" + e.getUniqueId()).equals(tName)) {isTarget = true; }
                     }
                     if(isTarget) {
@@ -162,7 +161,6 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
         if(t instanceof Player) {
             tName = t.getName();
         } else {
-            if(lead_only_player) { return; }
             tName = setEntityName(t);
         }
         tInfo = infoMap.get(tName);
@@ -177,6 +175,7 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
             return;
         }
         if(tInfo.isLeashing()) {return;}
+        if(lead_only_player) { return; }
         leash(pInfo, tInfo, pName, tName);
         p.getWorld().playSound(t.getLocation(), Sound.ENTITY_LEASH_KNOT_PLACE, 1, 1);
         setCoolTime(pInfo);
@@ -261,7 +260,7 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
         Player p = e.getPlayer();
         Entity t = e.getRightClicked();
         if(p.getInventory().getItemInMainHand().getType() == Material.LEAD ||
-        p.getInventory().getItemInOffHand().getType() == Material.LEAD) {
+                p.getInventory().getItemInOffHand().getType() == Material.LEAD) {
             clickWithLead(p, t);
         }
     }
@@ -289,7 +288,6 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
         if(entity instanceof Player) {
             pInfo = infoMap.get(entity.getName());
         } else {
-            if(lead_only_player){ return;}
             pInfo = infoMap.get(setEntityName(entity));
         }
         death(pInfo);
