@@ -14,6 +14,8 @@ public class PlayerInfo {
     private boolean isAddWire;
     private UUID wire;
 
+    private boolean isMultiple;
+
     public PlayerInfo(Entity origin) {
         this.origin = origin;
         pairName = null;
@@ -23,6 +25,7 @@ public class PlayerInfo {
         isDead = false;
         isAddWire = false;
         wire = null;
+        isMultiple = false;
     }
 
     public Entity getOrigin() {
@@ -87,4 +90,9 @@ public class PlayerInfo {
     public UUID getWire() {
         return wire;
     }
+
+    public boolean isMultiple() {
+        return isMultiple;
+    }
+
 }

@@ -175,7 +175,7 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
             return;
         }
         if(tInfo.isLeashing()) {return;}
-        if(lead_only_player) { return; }
+        if(!(t instanceof Player) && lead_only_player) { return; }
         leash(pInfo, tInfo, pName, tName);
         p.getWorld().playSound(t.getLocation(), Sound.ENTITY_LEASH_KNOT_PLACE, 1, 1);
         setCoolTime(pInfo);
