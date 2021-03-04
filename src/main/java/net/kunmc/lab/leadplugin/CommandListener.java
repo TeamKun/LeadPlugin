@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 
 public class CommandListener implements TabExecutor {
     final private LeadPlugin lp;
+    final private WireAPI wa;
 
     final private String holder_power = "holder_power";
     final private String target_power = "target_power";
@@ -26,14 +27,45 @@ public class CommandListener implements TabExecutor {
     final private String particle_mode = "particle_mode";
     final private String particle_type = "particle_type";
 
-    public CommandListener(LeadPlugin lp) {
+    public CommandListener(LeadPlugin lp, WireAPI wa) {
         this.lp = lp;
+        this.wa = wa;
         Bukkit.getPluginCommand("lead").setExecutor(this);
         Bukkit.getPluginCommand("lead").setTabCompleter(this);
     }
     @Override
     public boolean onCommand(CommandSender s, Command c, String l, String[]a) {
         if(c.getName().equals("lead")) {
+            if(a[0].equals("right")) {
+                if(a[1].equals("multiple")) {
+                    try {
+                        boolean isMultiple = Boolean.parseBoolean(a[3]);
+                        if(a[2].equals("@a")) {
+                            lp.getServer().getOnlinePlayers().forEach(p -> {
+                                if(lp.getInfoMap().containsKey(p.getName())) {
+                                    PlayerInfo pInfo = lp.getInfoMap().get(p.getName());
+                                    lp.quit(pInfo);
+                                    pInfo.release();
+                                    pInfo.setMultiple(isMultiple);
+                                }
+                            });
+                            s.sendMessage("§a全てのプレイヤーのmultipleを" + isMultiple + "にしました");
+                            return true;
+                        }
+                        if(lp.getInfoMap().containsKey(a[2])) {
+                            PlayerInfo pInfo = lp.getInfoMap().get(a[2]);
+                            lp.quit(pInfo);
+                            pInfo.release();
+                            pInfo.setMultiple(isMultiple);
+                            s.sendMessage("§a" + a[2] + "のmultipleを" + isMultiple + "にしました");
+                            return true;
+                        }
+                    } catch (Exception ignored) {
+                    }
+                }
+                s.sendMessage("無効な値です");
+                return true;
+            }
             if(a[0].equals("config")) {
                 if(a[1].equals("confirm")) {
                     s.sendMessage("§a" + holder_power + " : " + lp.holder_power);
@@ -121,6 +153,9 @@ public class CommandListener implements TabExecutor {
                         try {
                             lp.particle_mode = Boolean.parseBoolean(a[3]);
                             s.sendMessage("§a" + particle_mode + "を" + a[3] + "にしました");
+                            if(lp.particle_mode) {
+                                wa.initWire();
+                            }
                         } catch (Exception e) {
                             s.sendMessage("無効な値です");
                         }
@@ -147,11 +182,20 @@ public class CommandListener implements TabExecutor {
     public List<String> onTabComplete(CommandSender s, Command c, String l, String[] a) {
         if(c.getName().equals("lead")) {
             if(a.length == 1) {
-                return Stream.of("config").filter(e -> e.startsWith(a[0])).collect(Collectors.toList());
+                return Stream.of("config", "right").filter(e -> e.startsWith(a[0])).collect(Collectors.toList());
             }
             if(a.length == 2 && a[0].equals("config")) {
                 return Stream.of("confirm", "power", "distance", "option", "extra")
                         .filter(e -> e.startsWith(a[1])).collect(Collectors.toList());
+            }
+            if(a.length == 2 && a[0].equals("right")) {
+                return Stream.of("multiple").filter(e -> e.startsWith(a[1])).collect(Collectors.toList());
+            }
+            if(a.length == 3 && a[1].equals("multiple")) {
+                ArrayList<String> players = new ArrayList<String>();
+                lp.getServer().getOnlinePlayers().forEach(p -> players.add(p.getName()));
+                players.add("@a");
+                return players.stream().filter(e -> e.startsWith(a[2])).collect(Collectors.toList());
             }
             if(a.length == 3 && a[1].equals("power")) {
                 return Stream.of(holder_power, target_power, force_pull_power)
@@ -173,7 +217,7 @@ public class CommandListener implements TabExecutor {
                     || a[2].equals(force_teleport_distance))) {
                 return Collections.singletonList("数値");
             }
-            if(a.length == 4 && (a[2].equals(lead_after_death) || a[2].equals(lead_only_player) || a[2].equals(particle_mode))) {
+            if(a.length == 4 && (a[2].equals(lead_after_death) || a[2].equals(lead_only_player) || a[2].equals(particle_mode) || a[0].equals("right"))) {
                 return Stream.of("true", "false").filter(e -> e.startsWith(a[3])).collect(Collectors.toList());
             }
             if(a.length == 4 && a[2].equals(particle_type)) {

@@ -15,6 +15,7 @@ import org.bukkit.event.player.*;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -43,10 +44,10 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
         // Plugin startup logic
         infoMap = new HashMap<String, PlayerInfo>();
         config();
-        new CommandListener(this);
         getServer().getPluginManager().registerEvents(this, this);
         task();
         wireAPI = new WireAPI(this);
+        new CommandListener(this, wireAPI);
     }
 
     @Override
@@ -93,9 +94,18 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
                         return;
                     }
                     PlayerInfo pInfo = infoMap.get(p.getName());
-                    if(pInfo.isLeashing()) {
+
+                    if(pInfo.isLeashing() && pInfo.isHolder() && pInfo.isMultiple()) {
+                        if(pInfo.check(infoMap)) {
+                            quit(pInfo);
+                            pInfo.release();
+                            return;
+                        }
+                    }
+
+                    if(pInfo.isLeashing()  && (!pInfo.isHolder() || !pInfo.isMultiple())) {
                         PlayerInfo tInfo = infoMap.get(pInfo.getPairName());
-                        if(lead_after_death) {
+                        if(lead_after_death && !(!pInfo.isHolder() && tInfo.isMultiple())) {
                             if(pInfo.isDead() || tInfo.isDead()) { return; }
                         }
                         if(pInfo.isHolder()) {
@@ -105,20 +115,45 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
                                 pInfo.setAddWire(true);
                             }
                         }
-                        double distance = p.getLocation().distance(tInfo.getOrigin().getLocation());
-                        if(distance > force_teleport_distance) {
-                            p.teleport(tInfo.getOrigin().getLocation());
-                            return;
+                        calcDistance(p, tInfo);
+                        return;
+                    }
+                    if(pInfo.isLeashing() && pInfo.isHolder() && pInfo.isMultiple()) {
+                        if(lead_after_death) {
+                            if(pInfo.isDead()) {
+                                return;
+                            }
                         }
-                        if(distance > max_distance) {
-                            double diff = distance - max_distance;
-                            double power = calcPower(diff);
-                            pull(tInfo.getOrigin(), p,  power);
-                        }
+                        ArrayList<String> pairNames = new ArrayList<String>(pInfo.getPairNames());
+                        pairNames.forEach(pairName -> {
+                            PlayerInfo tInfo = infoMap.get(pairName);
+                            HashMap<String, Boolean> pairAddWires = pInfo.getPairAddWires();
+                            if(tInfo.isLeashing() && tInfo.getPairName() != null && tInfo.getPairName().equals(p.getName())) {
+                                if (particle_mode) {
+                                    setParticle(p.getLocation(), tInfo.getOrigin().getLocation(), pairName);
+                                } else {
+                                    pairAddWires.put(pairName, true);
+                                }
+                                calcDistance(p, tInfo);
+                            }
+                        });
                     }
                 });
             }
         }, 0L, 2L);
+    }
+
+    private void calcDistance(Player p, PlayerInfo tInfo) {
+        double distance = p.getLocation().distance(tInfo.getOrigin().getLocation());
+        if(distance > force_teleport_distance) {
+            p.teleport(tInfo.getOrigin().getLocation());
+            return;
+        }
+        if(distance > max_distance) {
+            double diff = distance - max_distance;
+            double power = calcPower(diff);
+            pull(tInfo.getOrigin(), p,  power);
+        }
     }
 
     private double calcPower(double diff) {
@@ -168,15 +203,35 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
         if(pInfo.isLeashing() && !pInfo.isHolder()) {return;}
         if(pInfo.isLeashing() && pInfo.isHolder()) {
             if(tInfo.isLeashing() && tInfo.getPairName() != null && tInfo.getPairName().equals(pName)) {
-                wireAPI.removeWire(pInfo.getWire());
-                release(pInfo, tInfo);
+                if (!pInfo.isMultiple() && pInfo.getWire() != null) {
+                    wireAPI.removeWire(pInfo.getWire());
+                } else if(pInfo.getPairWires() != null && pInfo.getPairWires().get(tName) != null) {
+                    wireAPI.removeWire(pInfo.getPairWires().get(tName));
+                }
+                if(pInfo.isMultiple()) {
+                    quit(tInfo);
+                } else {
+                    release(pInfo, tInfo);
+                }
                 setCoolTime(pInfo);
+                return;
             }
-            return;
+            if(!pInfo.isMultiple()) {
+                return;
+            }
         }
         if(tInfo.isLeashing()) {return;}
         if(!(t instanceof Player) && lead_only_player) { return; }
         leash(pInfo, tInfo, pName, tName);
+        if(pInfo.isMultiple()) {
+            ArrayList<String> pairNames = new ArrayList<String>(pInfo.getPairNames());
+            if (!pairNames.contains(tName)) {
+                pairNames.add(tName);
+                pInfo.getPairAddWires().put(tName, false);
+                pInfo.getPairWires().put(tName, null);
+            }
+            pInfo.setPairNames(pairNames);
+        }
         p.getWorld().playSound(t.getLocation(), Sound.ENTITY_LEASH_KNOT_PLACE, 1, 1);
         setCoolTime(pInfo);
     }
@@ -184,10 +239,23 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
     private void clickWithHand(Player p) {
         PlayerInfo pInfo = infoMap.get(p.getName());
         if(pInfo.isLeashing()) {
-            PlayerInfo tInfo = infoMap.get(pInfo.getPairName());
-            double power = pInfo.isHolder() ? holder_power : target_power;
-            pull(p, tInfo.getOrigin(), power);
-            setCoolTime(pInfo);
+            if(!pInfo.isHolder() || !pInfo.isMultiple()) {
+                PlayerInfo tInfo = infoMap.get(pInfo.getPairName());
+                double power = pInfo.isHolder() ? holder_power : target_power;
+                pull(p, tInfo.getOrigin(), power);
+                setCoolTime(pInfo);
+                return;
+            }
+            if(pInfo.isHolder() && pInfo.isMultiple()) {
+                ArrayList<String> pairNames = new ArrayList<String>(pInfo.getPairNames());
+                pairNames.forEach(pairName -> {
+                    PlayerInfo tInfo = infoMap.get(pairName);
+                    if(tInfo.isLeashing() && tInfo.getPairName() != null && tInfo.getPairName().equals(p.getName())) {
+                        pull(p, tInfo.getOrigin(), holder_power);
+                    }
+                });
+                setCoolTime(pInfo);
+            }
         }
     }
 
@@ -218,29 +286,67 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
         t.setVelocity(velocity.normalize().multiply(power));
     }
 
-    private void quit(PlayerInfo pInfo) {
+    public void quit(PlayerInfo pInfo) {
+        if(pInfo.isHolder() && pInfo.isMultiple()) {
+            ArrayList<String> pairNames = new ArrayList<String>(pInfo.getPairNames());;
+            pairNames.forEach(pairName -> {
+                PlayerInfo tInfo = infoMap.get(pairName);
+                if(tInfo.isLeashing() && tInfo.getPairName() != null && tInfo.getPairName().equals(pInfo.getOrigin().getName())) {
+                    if (!particle_mode) {
+                        if (pairNames.contains(pairName)) {
+                            if (pInfo.getPairWires().get(pairName) != null) {
+                                wireAPI.removeWire(pInfo.getPairWires().get(pairName));
+                            }
+                        }
+                    }
+                    tInfo.release();
+                }
+            });
+            return;
+        }
         if(pInfo.isLeashing()) {
-            PlayerInfo tInfo = infoMap.get(pInfo.getPairName());
-            if(!particle_mode) {
-                UUID wire = pInfo.isHolder() ? pInfo.getWire() : tInfo.getWire();
-                wireAPI.removeWire(wire);
+            if(!pInfo.isHolder() || !pInfo.isMultiple()) {
+                PlayerInfo tInfo = infoMap.get(pInfo.getPairName());
+                if (!particle_mode) {
+                    UUID wire;
+                    if(!pInfo.isHolder() && tInfo.isMultiple()) {
+                        String name;
+                        if(pInfo.getOrigin() instanceof Player) {
+                            name = pInfo.getOrigin().getName();
+                        } else {
+                            name = setEntityName(pInfo.getOrigin());
+                        }
+                        wire = tInfo.getPairWires().get(name);
+                    } else {
+                        wire = pInfo.isHolder() ? pInfo.getWire() : tInfo.getWire();
+                    }
+                    if (wire != null) {
+                        wireAPI.removeWire(wire);
+                    }
+                }
+                if(pInfo.isHolder() || !tInfo.isMultiple()) {
+                    release(pInfo, tInfo);
+                } else  {
+                    pInfo.release();
+                }
             }
-            release(pInfo, tInfo);
         }
     }
 
     private void death(PlayerInfo pInfo) {
         if(pInfo.isLeashing()) {
-            PlayerInfo tInfo = infoMap.get(pInfo.getPairName());
-            if(!particle_mode) {
-                UUID wire = pInfo.isHolder() ? pInfo.getWire() : tInfo.getWire();
-                wireAPI.removeWire(wire);
-            }
             if(lead_after_death && pInfo.getOrigin() instanceof Player) {
+                if(!pInfo.isHolder() && infoMap.get(pInfo.getPairName()) != null) {
+                    PlayerInfo tInfo = infoMap.get(pInfo.getPairName());
+                    if(tInfo.isMultiple()) {
+                        quit(pInfo);
+                        return;
+                    }
+                }
                 pInfo.setDead(true);
                 return;
             }
-            release(pInfo, tInfo);
+            quit(pInfo);
         }
     }
 

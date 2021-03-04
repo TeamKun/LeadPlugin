@@ -2,6 +2,8 @@ package net.kunmc.lab.leadplugin;
 
 import org.bukkit.entity.Entity;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.UUID;
 
 public class PlayerInfo {
@@ -15,6 +17,9 @@ public class PlayerInfo {
     private UUID wire;
 
     private boolean isMultiple;
+    private ArrayList<String> pairNames;
+    private HashMap<String, Boolean> pairAddWires;
+    private HashMap<String, UUID> pairWires;
 
     public PlayerInfo(Entity origin) {
         this.origin = origin;
@@ -26,6 +31,9 @@ public class PlayerInfo {
         isAddWire = false;
         wire = null;
         isMultiple = false;
+        pairNames = new ArrayList<String>();
+        pairAddWires = new HashMap<String, Boolean>();
+        pairWires = new HashMap<String, UUID>();
     }
 
     public Entity getOrigin() {
@@ -59,6 +67,9 @@ public class PlayerInfo {
         isCool = false;
         isDead = false;
         isAddWire = false;
+        pairNames = new ArrayList<String>();
+        pairAddWires = new HashMap<String, Boolean>();
+        pairWires = new HashMap<String, UUID>();
     }
 
     public void leash(boolean isHolder, String pairName) {
@@ -91,8 +102,49 @@ public class PlayerInfo {
         return wire;
     }
 
+    public void setMultiple(boolean multiple) {
+        isMultiple = multiple;
+    }
+
     public boolean isMultiple() {
         return isMultiple;
     }
 
+    public void setPairNames(ArrayList<String> pairNames) {
+        this.pairNames = pairNames;
+    }
+
+    public ArrayList<String> getPairNames() {
+        return pairNames;
+    }
+
+    public void setPairAddWires(HashMap<String, Boolean> pairAddWires) {
+        this.pairAddWires = pairAddWires;
+    }
+
+    public HashMap<String, Boolean> getPairAddWires() {
+        return pairAddWires;
+    }
+
+    public void setPairWires(HashMap<String, UUID> pairWires) {
+        this.pairWires = pairWires;
+    }
+
+    public HashMap<String, UUID> getPairWires() {
+        return pairWires;
+    }
+
+    public boolean check(HashMap<String, PlayerInfo> infoMap) {
+        HashMap<String, PlayerInfo> im = new HashMap<String, PlayerInfo>(infoMap);
+        ArrayList<String> pns = new ArrayList<String>(pairNames);
+        boolean canRelease = true;
+        for(String pn: pns) {
+            PlayerInfo tInfo = im.get(pn);
+            if(tInfo.isLeashing && tInfo.getPairName() != null && tInfo.getPairName().equals(origin.getName())) {
+                canRelease = false;
+                break;
+            }
+        }
+        return canRelease;
+    }
 }

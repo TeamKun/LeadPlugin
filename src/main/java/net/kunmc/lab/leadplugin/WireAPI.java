@@ -2,7 +2,9 @@ package net.kunmc.lab.leadplugin;
 
 import me.saharnooby.plugins.leadwires.LeadWires;
 import me.saharnooby.plugins.leadwires.api.LeadWiresAPI;
+import me.saharnooby.plugins.leadwires.wire.Wire;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -15,14 +17,13 @@ public class WireAPI {
         wireTask();
     }
 
-    private void initWire() {
+     public void initWire() {
         lp.getServer().getScheduler().runTask(lp, new Runnable() {
             @Override
             public void run() {
                 LeadWiresAPI wireApi = LeadWires.getApi();
-                wireApi.getWires().forEach((u, w) -> {
-                    wireApi.removeWire(u);
-                });
+                HashMap<UUID, Wire> wires = new HashMap<UUID, Wire>(wireApi.getWires());
+                wires.keySet().forEach(wireApi::removeWire);
             }
         });
     }
@@ -38,13 +39,35 @@ public class WireAPI {
                     if(!infoMap.containsKey(p.getName())) {return;}
                     PlayerInfo pInfo = infoMap.get(p.getName());
                     if(!pInfo.isLeashing()) {return;}
-                    PlayerInfo tInfo = infoMap.get(pInfo.getPairName());
-                    if(pInfo.isAddWire() && pInfo.isHolder()) {
-                        if(pInfo.getWire() != null) {
-                            wireAPI.removeWire(pInfo.getWire());
+                    if(!pInfo.isMultiple()) {
+                        if (pInfo.isAddWire() && pInfo.isHolder()) {
+                            PlayerInfo tInfo = infoMap.get(pInfo.getPairName());
+                            if (pInfo.getWire() != null) {
+                                wireAPI.removeWire(pInfo.getWire());
+                            }
+                            pInfo.setWire(wireAPI.addWire(p.getLocation().add(0, 1, 0), tInfo.getOrigin().getLocation().add(0, 1, 0)));
+                            pInfo.setAddWire(false);
                         }
-                        pInfo.setWire(wireAPI.addWire(p.getLocation().add(0, 1, 0), tInfo.getOrigin().getLocation().add(0, 1, 0)));
-                        pInfo.setAddWire(false);
+                        return;
+                    }
+                    if(pInfo.isHolder() && pInfo.isMultiple()) {
+                        ArrayList<String> pairNames = new ArrayList<String>(pInfo.getPairNames());
+                        pairNames.forEach(pairName -> {
+                            PlayerInfo tInfo = infoMap.get(pairName);
+                            HashMap<String, Boolean> pairAddWires = pInfo.getPairAddWires();
+                            HashMap<String, UUID> pairWires = pInfo.getPairWires();
+                            if(tInfo.isLeashing() && tInfo.getPairName() != null && tInfo.getPairName().equals(p.getName())) {
+                                if(pairAddWires.containsKey(pairName)) {
+                                    if(pairAddWires.get(pairName) && pairWires.containsKey(pairName)) {
+                                        if(pairWires.get(pairName) != null) {
+                                            wireAPI.removeWire(pairWires.get(pairName));
+                                        }
+                                        pairWires.put(pairName, wireAPI.addWire(p.getLocation().add(0, 1, 0), tInfo.getOrigin().getLocation().add(0, 1,0)));
+                                        pairAddWires.put(pairName, false);
+                                    }
+                                }
+                            }
+                        });
                     }
                 });
             }

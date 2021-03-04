@@ -34,3 +34,9 @@
   リードの代わりにパーティクルを表示かどうか
 - particle_type  
   パーティクルのタイプ
+  
+# コマンド  
+- lead config  
+  コンフィグの設定  
+- lead right multiple player 真偽値  
+  複数人拘束できるかどうか  
