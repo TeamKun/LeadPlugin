@@ -90,23 +90,35 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
             public void run() {
                 getServer().getOnlinePlayers().forEach(p -> {
                     if(!infoMap.containsKey(p.getName())) {
+                        p.setCollidable(false);
                         infoMap.put(p.getName(), new PlayerInfo(p));
                         return;
                     }
                     PlayerInfo pInfo = infoMap.get(p.getName());
 
-                    if(pInfo.isLeashing() && pInfo.isHolder() && pInfo.isMultiple()) {
-                        if(pInfo.check(infoMap)) {
+                    if(!pInfo.isLeashing() || pInfo.isLeashing() && pInfo.isHolder()) {
+                        if(pInfo.multipleCheck()) {
                             quit(pInfo);
                             pInfo.release();
                             return;
                         }
                     }
 
+                    if(pInfo.isLeashing() && pInfo.isHolder() && pInfo.isMultiple()) {
+                        if(pInfo.holderCheck(infoMap)) {
+                            quit(pInfo);
+                            pInfo.release();
+                            return;
+                        }
+                    }
                     if(pInfo.isLeashing()  && (!pInfo.isHolder() || !pInfo.isMultiple())) {
                         PlayerInfo tInfo = infoMap.get(pInfo.getPairName());
                         if(lead_after_death && !(!pInfo.isHolder() && tInfo.isMultiple())) {
                             if(pInfo.isDead() || tInfo.isDead()) { return; }
+                        }
+                        if(!tInfo.getOrigin().isValid()) {
+                            quit(tInfo);
+                            return;
                         }
                         if(pInfo.isHolder()) {
                             if(particle_mode) {
@@ -115,7 +127,7 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
                                 pInfo.setAddWire(true);
                             }
                         }
-                        calcDistance(p, tInfo);
+                        calcDistance(pInfo, tInfo);
                         return;
                     }
                     if(pInfo.isLeashing() && pInfo.isHolder() && pInfo.isMultiple()) {
@@ -127,6 +139,10 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
                         ArrayList<String> pairNames = new ArrayList<String>(pInfo.getPairNames());
                         pairNames.forEach(pairName -> {
                             PlayerInfo tInfo = infoMap.get(pairName);
+                            if(!tInfo.getOrigin().isValid()) {
+                                quit(tInfo);
+                                return;
+                            }
                             HashMap<String, Boolean> pairAddWires = pInfo.getPairAddWires();
                             if(tInfo.isLeashing() && tInfo.getPairName() != null && tInfo.getPairName().equals(p.getName())) {
                                 if (particle_mode) {
@@ -134,7 +150,7 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
                                 } else {
                                     pairAddWires.put(pairName, true);
                                 }
-                                calcDistance(p, tInfo);
+                                calcDistance(pInfo, tInfo);
                             }
                         });
                     }
@@ -143,16 +159,30 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
         }, 0L, 2L);
     }
 
-    private void calcDistance(Player p, PlayerInfo tInfo) {
-        double distance = p.getLocation().distance(tInfo.getOrigin().getLocation());
+    private void calcDistance(PlayerInfo pInfo, PlayerInfo tInfo) {
+        LivingEntity p = pInfo.getOrigin();
+        LivingEntity t = tInfo.getOrigin();
+        if(pInfo.getWorld() != pInfo.checkBiome()) {
+            quit(pInfo);
+            pInfo.release();
+            pInfo.setWorld(pInfo.checkBiome());
+            return;
+        }
+        if(tInfo.getWorld() != tInfo.checkBiome()) {
+            quit(tInfo);
+            tInfo.release();
+            tInfo.setWorld(tInfo.checkBiome());
+            return;
+        }
+        double distance = p.getLocation().distance(t.getLocation());
         if(distance > force_teleport_distance) {
-            p.teleport(tInfo.getOrigin().getLocation());
+            p.teleport(t.getLocation());
             return;
         }
         if(distance > max_distance) {
             double diff = distance - max_distance;
             double power = calcPower(diff);
-            pull(tInfo.getOrigin(), p,  power);
+            pull(t, p,  power);
         }
     }
 
@@ -188,7 +218,7 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
     }
 
     private void clickWithLead(Player p, Entity t) {
-        if(!(t instanceof LivingEntity)) { return; };
+        if(!(t instanceof LivingEntity) || (t.getType() == EntityType.SILVERFISH)) { return; };
         String pName = p.getName();
         String tName;
         PlayerInfo pInfo = infoMap.get(pName);
@@ -356,7 +386,7 @@ public final class LeadPlugin extends JavaPlugin implements Listener {
 
     private String setEntityName(Entity e) {
         if(!infoMap.containsKey("No" + e.getUniqueId())) {
-            infoMap.put("No" + e.getUniqueId(), new PlayerInfo(e));
+            infoMap.put("No" + e.getUniqueId(), new PlayerInfo((LivingEntity) e));
         }
         return "No" + e.getUniqueId();
     }

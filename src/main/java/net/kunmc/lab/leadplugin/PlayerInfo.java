@@ -1,13 +1,13 @@
 package net.kunmc.lab.leadplugin;
 
-import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 
 public class PlayerInfo {
-    final private Entity origin;
+    final private LivingEntity origin;
     private String pairName;
     private boolean isLeashing;
     private boolean isHolder;
@@ -16,12 +16,14 @@ public class PlayerInfo {
     private boolean isAddWire;
     private UUID wire;
 
+    private int world;
+
     private boolean isMultiple;
     private ArrayList<String> pairNames;
     private HashMap<String, Boolean> pairAddWires;
     private HashMap<String, UUID> pairWires;
 
-    public PlayerInfo(Entity origin) {
+    public PlayerInfo(LivingEntity origin) {
         this.origin = origin;
         pairName = null;
         isLeashing = false;
@@ -30,13 +32,14 @@ public class PlayerInfo {
         isDead = false;
         isAddWire = false;
         wire = null;
-        isMultiple = false;
+        world = checkBiome();
+        isMultiple = origin.hasPermission("leadplugin.multiple");
         pairNames = new ArrayList<String>();
         pairAddWires = new HashMap<String, Boolean>();
         pairWires = new HashMap<String, UUID>();
     }
 
-    public Entity getOrigin() {
+    public LivingEntity getOrigin() {
         return origin;
     }
 
@@ -102,9 +105,7 @@ public class PlayerInfo {
         return wire;
     }
 
-    public void setMultiple(boolean multiple) {
-        isMultiple = multiple;
-    }
+    // public void setMultiple(boolean multiple) { isMultiple = multiple; }
 
     public boolean isMultiple() {
         return isMultiple;
@@ -118,23 +119,15 @@ public class PlayerInfo {
         return pairNames;
     }
 
-    public void setPairAddWires(HashMap<String, Boolean> pairAddWires) {
-        this.pairAddWires = pairAddWires;
-    }
-
     public HashMap<String, Boolean> getPairAddWires() {
         return pairAddWires;
-    }
-
-    public void setPairWires(HashMap<String, UUID> pairWires) {
-        this.pairWires = pairWires;
     }
 
     public HashMap<String, UUID> getPairWires() {
         return pairWires;
     }
 
-    public boolean check(HashMap<String, PlayerInfo> infoMap) {
+    public boolean holderCheck(HashMap<String, PlayerInfo> infoMap) {
         HashMap<String, PlayerInfo> im = new HashMap<String, PlayerInfo>(infoMap);
         ArrayList<String> pns = new ArrayList<String>(pairNames);
         boolean canRelease = true;
@@ -146,5 +139,39 @@ public class PlayerInfo {
             }
         }
         return canRelease;
+    }
+
+    public boolean multipleCheck() {
+        if(isMultiple) {
+            if(!origin.hasPermission("leadplugin.multiple")) {
+                isMultiple = false;
+                return true;
+            }
+        } else {
+            if(origin.hasPermission("leadplugin.multiple")) {
+                isMultiple = true;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public int getWorld() {
+        return world;
+    }
+
+    public void setWorld(int world) {
+        this.world = world;
+    }
+
+    public int checkBiome() {
+        switch (origin.getLocation().getBlock().getBiome()) {
+            case NETHER:
+                return 1;
+            case THE_END:
+                return 2;
+            default:
+                return 0;
+        }
     }
 }

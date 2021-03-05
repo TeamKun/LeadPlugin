@@ -8,3 +8,7 @@ commands:
     usage: /<command> config
     permission: op
 depend: [ProtocolLib, LeadWires]
+permissions:
+  leadplugin.multiple:
+    description: Allows you to lead multi platers
+    default: op

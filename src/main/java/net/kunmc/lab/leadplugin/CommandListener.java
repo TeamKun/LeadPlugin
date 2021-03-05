@@ -36,6 +36,7 @@ public class CommandListener implements TabExecutor {
     @Override
     public boolean onCommand(CommandSender s, Command c, String l, String[]a) {
         if(c.getName().equals("lead")) {
+            /*
             if(a[0].equals("right")) {
                 if(a[1].equals("multiple")) {
                     try {
@@ -66,6 +67,7 @@ public class CommandListener implements TabExecutor {
                 s.sendMessage("無効な値です");
                 return true;
             }
+             */
             if(a[0].equals("config")) {
                 if(a[1].equals("confirm")) {
                     s.sendMessage("§a" + holder_power + " : " + lp.holder_power);
@@ -182,12 +184,14 @@ public class CommandListener implements TabExecutor {
     public List<String> onTabComplete(CommandSender s, Command c, String l, String[] a) {
         if(c.getName().equals("lead")) {
             if(a.length == 1) {
-                return Stream.of("config", "right").filter(e -> e.startsWith(a[0])).collect(Collectors.toList());
+                // return Stream.of("config", "right").filter(e -> e.startsWith(a[0])).collect(Collectors.toList());
+                return Stream.of("config").filter(e -> e.startsWith(a[0])).collect(Collectors.toList());
             }
             if(a.length == 2 && a[0].equals("config")) {
                 return Stream.of("confirm", "power", "distance", "option", "extra")
                         .filter(e -> e.startsWith(a[1])).collect(Collectors.toList());
             }
+            /*
             if(a.length == 2 && a[0].equals("right")) {
                 return Stream.of("multiple").filter(e -> e.startsWith(a[1])).collect(Collectors.toList());
             }
@@ -197,6 +201,7 @@ public class CommandListener implements TabExecutor {
                 players.add("@a");
                 return players.stream().filter(e -> e.startsWith(a[2])).collect(Collectors.toList());
             }
+             */
             if(a.length == 3 && a[1].equals("power")) {
                 return Stream.of(holder_power, target_power, force_pull_power)
                         .filter(e -> e.startsWith(a[2])).collect(Collectors.toList());
@@ -217,7 +222,12 @@ public class CommandListener implements TabExecutor {
                     || a[2].equals(force_teleport_distance))) {
                 return Collections.singletonList("数値");
             }
+            /*
             if(a.length == 4 && (a[2].equals(lead_after_death) || a[2].equals(lead_only_player) || a[2].equals(particle_mode) || a[0].equals("right"))) {
+                return Stream.of("true", "false").filter(e -> e.startsWith(a[3])).collect(Collectors.toList());
+            }
+             */
+            if(a.length == 4 && (a[2].equals(lead_after_death) || a[2].equals(lead_only_player) || a[2].equals(particle_mode))) {
                 return Stream.of("true", "false").filter(e -> e.startsWith(a[3])).collect(Collectors.toList());
             }
             if(a.length == 4 && a[2].equals(particle_type)) {
