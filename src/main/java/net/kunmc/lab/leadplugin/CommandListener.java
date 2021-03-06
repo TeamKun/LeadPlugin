@@ -58,56 +58,56 @@ public class CommandListener implements TabExecutor {
                                 if (a[3].equals(holder_power)) {
                                     try {
                                         double d = Double.parseDouble(a[4]);
-                                        if(d <= 0) {
+                                        if(d < 0) {
                                             throw new Exception("");
                                         }
                                         config.holder_power = d;
                                         s.sendMessage("§a" + holder_power + "を" + d + "にしました");
                                         return true;
                                     } catch (Exception e) {
-                                        s.sendMessage("/lead config set main " + holder_power + " 数値");
+                                        s.sendMessage("/lead config set main " + holder_power + " 数値 (0以上) ");
                                     }
                                     return true;
                                 }
                                 if (a[3].equals(target_power)) {
                                     try {
                                         double d = Double.parseDouble(a[4]);
-                                        if(d <= 0) {
+                                        if(d < 0) {
                                             throw new Exception("");
                                         }
                                         config.target_power = d;
                                         s.sendMessage("§a" + target_power + "を" + d + "にしました");
                                         return true;
                                     } catch (Exception e) {
-                                        s.sendMessage("/lead config set main " + target_power + " 数値");
+                                        s.sendMessage("/lead config set main " + target_power + " 数値 (0以上) ");
                                     }
                                     return true;
                                 }
                                 if (a[3].equals(max_distance)) {
                                     try {
                                         double d = Double.parseDouble(a[4]);
-                                        if(d <= 0) {
+                                        if(d < 0) {
                                             throw new Exception("");
                                         }
                                         config.max_distance = d;
                                         s.sendMessage("§a" + max_distance + "を" + a[4] + "にしました");
                                         return true;
                                     } catch (Exception e) {
-                                        s.sendMessage("/lead config set main " + max_distance + " 数値");
+                                        s.sendMessage("/lead config set main " + max_distance + " 数値 (0以上) ");
                                     }
                                     return true;
                                 }
                                 if (a[3].equals(force_teleport_distance)) {
                                     try {
                                         double d = Double.parseDouble(a[4]);
-                                        if(d <= 0) {
+                                        if(d < 0) {
                                             throw new Exception("");
                                         }
                                         config.force_teleport_distance = d;
                                         s.sendMessage("§a" + force_teleport_distance + "を" + d + "にしました");
                                         return true;
                                     } catch (Exception e) {
-                                        s.sendMessage("/lead config set main " + force_teleport_distance + " 数値");
+                                        s.sendMessage("/lead config set main " + force_teleport_distance + " 数値 (0以上) ");
                                     }
                                     return true;
                                 }
@@ -119,7 +119,7 @@ public class CommandListener implements TabExecutor {
                                         s.sendMessage("§a" + lead_only_player + "を" + a[4] + "にしました");
                                         return true;
                                     } catch (Exception e) {
-                                        s.sendMessage("/lead config set extra " + lead_only_player + " 真偽値");
+                                        s.sendMessage("/lead config set extra " + lead_only_player + " true or false ");
                                     }
                                     return true;
                                 }
@@ -129,7 +129,7 @@ public class CommandListener implements TabExecutor {
                                         s.sendMessage("§a" + possessive_mode + "を" + a[4] + "にしました");
                                         return true;
                                     } catch (Exception e) {
-                                        s.sendMessage("/lead config set extra " + possessive_mode + " 真偽値");
+                                        s.sendMessage("/lead config set extra " + possessive_mode + " true or false ");
                                     }
                                     return true;
                                 }
@@ -139,7 +139,7 @@ public class CommandListener implements TabExecutor {
                                         s.sendMessage("§a" + particle_mode + "を" + a[4] + "にしました");
                                         return true;
                                     } catch (Exception e) {
-                                        s.sendMessage("/lead config set extra " + particle_mode + " 真偽値");
+                                        s.sendMessage("/lead config set extra " + particle_mode + " true or false ");
                                     }
                                     return true;
                                 }
@@ -188,7 +188,7 @@ public class CommandListener implements TabExecutor {
             }
             if(a.length == 5 && (a[3].equals(holder_power) || a[3].equals(target_power) || a[3].equals(max_distance)
                     || a[3].equals(force_teleport_distance))) {
-                return Collections.singletonList("数値");
+                return Collections.singletonList("数値 (0以上) ");
             }
             if(a.length == 5 && ( a[3].equals(lead_only_player) || a[3].equals(particle_mode) || a[3].equals(possessive_mode))) {
                 return Stream.of("true", "false").filter(e -> e.startsWith(a[4])).collect(Collectors.toList());
