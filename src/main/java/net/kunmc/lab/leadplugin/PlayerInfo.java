@@ -8,163 +8,80 @@ import java.util.UUID;
 
 public class PlayerInfo {
     final private LivingEntity origin;
-    private String pairName;
-    private boolean isLeashing;
-    private boolean isHolder;
+    private int biomes;
     private boolean isCool;
-    private boolean isDead;
-    private boolean isAddWire;
-    private UUID wire;
-
-    private int world;
-
+    private boolean isLeading;
+    private boolean isLeashing;
     private boolean isMultiple;
-    private ArrayList<String> pairNames;
-    private HashMap<String, Boolean> pairAddWires;
-    private HashMap<String, UUID> pairWires;
+    private HashMap<UUID,Boolean> targetMap;
+    private HashMap<UUID,Boolean> holderMap;
+    private ArrayList<UUID> wires;
 
     public PlayerInfo(LivingEntity origin) {
         this.origin = origin;
-        pairName = null;
-        isLeashing = false;
-        isHolder = false;
+        biomes = checkBiomes();
         isCool = false;
-        isDead = false;
-        isAddWire = false;
-        wire = null;
-        world = checkBiome();
+        isLeading = false;
+        isLeading = false;
         isMultiple = origin.hasPermission("leadplugin.multiple");
-        pairNames = new ArrayList<String>();
-        pairAddWires = new HashMap<String, Boolean>();
-        pairWires = new HashMap<String, UUID>();
+        targetMap = new HashMap<UUID,Boolean>();
+        holderMap = new HashMap<UUID,Boolean>();
+        wires = new ArrayList<UUID>();
     }
 
     public LivingEntity getOrigin() {
         return origin;
     }
 
-    public String getPairName() {
-        return pairName;
+    public void setCool(boolean cool) {
+        isCool = cool;
+    }
+
+    public boolean isCool() {
+        return isCool;
+    }
+
+    public boolean isLeading() {
+        return isLeading;
+    }
+
+    public void setLeading(boolean leading) {
+        isLeading = leading;
     }
 
     public boolean isLeashing() {
         return isLeashing;
     }
 
-    public boolean isHolder() {
-        return isHolder;
+    public void setLeashing(boolean leashing) {
+        isLeashing = leashing;
     }
-
-    public void setCool(boolean cool) {
-        isCool = cool;
-    }
-
-    public boolean isCoolTime() {
-        return isCool;
-    }
-
-    public void release() {
-        pairName = null;
-        isLeashing = false;
-        isHolder = false;
-        isCool = false;
-        isDead = false;
-        isAddWire = false;
-        pairNames = new ArrayList<String>();
-        pairAddWires = new HashMap<String, Boolean>();
-        pairWires = new HashMap<String, UUID>();
-    }
-
-    public void leash(boolean isHolder, String pairName) {
-        this.pairName = pairName;
-        if(isHolder){this.isHolder=true;}
-        isLeashing = true;
-    }
-
-    public void setDead(boolean dead) {
-        isDead = dead;
-    }
-
-    public boolean isDead() {
-        return isDead;
-    }
-
-    public void setAddWire(boolean addWire) {
-        isAddWire = addWire;
-    }
-
-    public boolean isAddWire() {
-        return isAddWire;
-    }
-
-    public void setWire(UUID wire) {
-        this.wire = wire;
-    }
-
-    public UUID getWire() {
-        return wire;
-    }
-
-    // public void setMultiple(boolean multiple) { isMultiple = multiple; }
 
     public boolean isMultiple() {
         return isMultiple;
     }
 
-    public void setPairNames(ArrayList<String> pairNames) {
-        this.pairNames = pairNames;
+    public void setMultiple(boolean multiple) {
+        isMultiple = multiple;
     }
 
-    public ArrayList<String> getPairNames() {
-        return pairNames;
+    public HashMap<UUID, Boolean> getTargetMap() {
+        return targetMap;
     }
 
-    public HashMap<String, Boolean> getPairAddWires() {
-        return pairAddWires;
+    public HashMap<UUID, Boolean> getHolderMap() {
+        return holderMap;
     }
 
-    public HashMap<String, UUID> getPairWires() {
-        return pairWires;
+    public ArrayList<UUID> getWires() {
+        return wires;
     }
 
-    public boolean holderCheck(HashMap<String, PlayerInfo> infoMap) {
-        HashMap<String, PlayerInfo> im = new HashMap<String, PlayerInfo>(infoMap);
-        ArrayList<String> pns = new ArrayList<String>(pairNames);
-        boolean canRelease = true;
-        for(String pn: pns) {
-            PlayerInfo tInfo = im.get(pn);
-            if(tInfo.isLeashing && tInfo.getPairName() != null && tInfo.getPairName().equals(origin.getName())) {
-                canRelease = false;
-                break;
-            }
-        }
-        return canRelease;
+    public void setWires(ArrayList<UUID> wires) {
+        this.wires = wires;
     }
 
-    public boolean multipleCheck() {
-        if(isMultiple) {
-            if(!origin.hasPermission("leadplugin.multiple")) {
-                isMultiple = false;
-                return true;
-            }
-        } else {
-            if(origin.hasPermission("leadplugin.multiple")) {
-                isMultiple = true;
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public int getWorld() {
-        return world;
-    }
-
-    public void setWorld(int world) {
-        this.world = world;
-    }
-
-    public int checkBiome() {
+    private int checkBiomes() {
         switch (origin.getLocation().getBlock().getBiome()) {
             case NETHER:
                 return 1;
@@ -173,5 +90,30 @@ public class PlayerInfo {
             default:
                 return 0;
         }
+    }
+
+    public void init() {
+        biomes = checkBiomes();
+        isCool = false;
+        isLeading = false;
+        isLeashing = false;
+    }
+
+    public boolean shouldRelease() {
+        return !origin.isValid() || origin.isDead() || biomes != checkBiomes();
+    }
+
+    public boolean isTarget(UUID holderId) {
+        if(holderMap.containsKey(holderId)) {
+            return holderMap.get(holderId);
+        }
+        return false;
+    }
+
+    public boolean isHolder(UUID targetId) {
+        if(targetMap.containsKey(targetId)) {
+            return targetMap.get(targetId);
+        }
+        return false;
     }
 }

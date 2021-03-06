@@ -5,10 +5,10 @@ api-version: 1.15
 commands:
   lead:
     description: leadplugin.
-    usage: /<command> config
+    usage: /<command> show config / set config
     permission: op
 depend: [ProtocolLib, LeadWires]
 permissions:
   leadplugin.multiple:
-    description: Allows you to lead multi platers
+    description: Allows you to lead multi players
     default: op
