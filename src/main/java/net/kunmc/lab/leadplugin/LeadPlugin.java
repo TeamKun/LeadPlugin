@@ -191,6 +191,7 @@ public final class LeadPlugin extends JavaPlugin {
     }
 
     public void joinEvent(Player p) {
+        p.setCollidable(false);
         infoMap.put(p.getUniqueId(), new PlayerInfo(p));
     }
 
