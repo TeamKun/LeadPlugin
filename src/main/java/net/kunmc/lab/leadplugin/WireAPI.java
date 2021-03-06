@@ -51,6 +51,7 @@ public class WireAPI {
                 LeadWiresAPI api = LeadWires.getApi();
                 ArrayList<UUID> wires = new ArrayList<UUID>(hInfo.getWires());
                 wires.forEach(api::removeWire);
+                hInfo.setWires(new ArrayList<UUID>());
             }
         });
     }

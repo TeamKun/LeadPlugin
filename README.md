@@ -32,6 +32,8 @@
 - particle_type  
   パーティクルのタイプ
   
-# コマンド  
-- lead config  
+# コマンド 
+- lead show config  
+  コンフィグの閲覧
+- lead set config  
   コンフィグの設定
