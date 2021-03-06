@@ -94,6 +94,9 @@ public final class LeadPlugin extends JavaPlugin {
 
     private double calcPower(double diff, boolean isHolder) {
         double power = isHolder ? config.holder_power : config.target_power;
+        if(power <= 0) {
+            power = 0.1;
+        }
         for(double p = 0; p < diff; p += power) {
             p += power;
         }

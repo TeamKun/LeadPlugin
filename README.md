@@ -14,7 +14,7 @@
 - [LeadWires](https://www.spigotmc.org/resources/leadwires.76515/)  
 - [ProtocolLib](https://www.spigotmc.org/resources/protocollib.1997/)
 
-# コンフィグ(lead configコマンド)
+# コンフィグ
 - holder_power  
   捕縛者の力　　
 - target_power  
@@ -33,7 +33,7 @@
   パーティクルのタイプ
   
 # コマンド 
-- lead show config  
+- lead config show  
   コンフィグの閲覧
-- lead set config  
+- lead config set   
   コンフィグの設定
