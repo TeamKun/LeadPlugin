@@ -24,6 +24,7 @@ public class EventListener implements Listener {
         if(!(e.getRightClicked() instanceof LivingEntity) || (e.getRightClicked().getType() == EntityType.SILVERFISH)) {return;}
         if(e.getPlayer().getInventory().getItemInMainHand().getType() != Material.LEAD &&
                 e.getPlayer().getInventory().getItemInOffHand().getType() != Material.LEAD) {
+            return;
         }
         Player p = e.getPlayer();
         LivingEntity t = (LivingEntity) e.getRightClicked();
