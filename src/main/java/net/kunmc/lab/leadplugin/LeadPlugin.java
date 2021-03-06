@@ -94,14 +94,14 @@ public final class LeadPlugin extends JavaPlugin {
 
     private double calcPower(double diff, boolean isHolder) {
         double power = isHolder ? config.holder_power : config.target_power;
-        return power * diff;
+        return (power * diff) > 10 ? 10 : (power * diff);
     }
 
     private void pull(LivingEntity h, LivingEntity t, double power) {
         Vector hv = h.getLocation().toVector();
         Vector tv = t.getLocation().toVector();
-        Vector velocity = hv.subtract(tv);
-        t.setVelocity(velocity.normalize().multiply(power));
+        Vector velocity = hv.subtract(tv).normalize().multiply(power);
+        t.setVelocity(velocity);
     }
 
     private void setParticle(PlayerInfo hInfo, PlayerInfo tInfo) {
