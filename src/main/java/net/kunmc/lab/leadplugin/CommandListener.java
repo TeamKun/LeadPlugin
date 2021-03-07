@@ -49,6 +49,7 @@ public class CommandListener implements TabExecutor {
                             return true;
                         }
                     } catch (Exception ignored) {
+                        s.sendMessage("§c/lead help" + " で使い方を参照してください");
                         return true;
                     }
                     try {
@@ -61,12 +62,12 @@ public class CommandListener implements TabExecutor {
                                             throw new Exception("");
                                         }
                                         config.holder_power = d;
-                                        s.sendMessage("§a" + holder_power + "を" + d + "にしました");
+                                        s.sendMessage("§a" + holder_power + "を" + config.holder_power + "にしました");
                                         return true;
                                     } catch (Exception e) {
-                                        s.sendMessage("/lead config set main " + holder_power + " 数値 (0以上) ");
+                                        s.sendMessage("§c/lead config set main " + holder_power + " 数値 (0以上) ");
+                                        return true;
                                     }
-                                    return true;
                                 }
                                 if (a[3].equals(target_power)) {
                                     try {
@@ -75,12 +76,12 @@ public class CommandListener implements TabExecutor {
                                             throw new Exception("");
                                         }
                                         config.target_power = d;
-                                        s.sendMessage("§a" + target_power + "を" + d + "にしました");
+                                        s.sendMessage("§a" + target_power + "を" + config.target_power + "にしました");
                                         return true;
                                     } catch (Exception e) {
-                                        s.sendMessage("/lead config set main " + target_power + " 数値 (0以上) ");
+                                        s.sendMessage("§c/lead config set main " + target_power + " 数値 (0以上) ");
+                                        return true;
                                     }
-                                    return true;
                                 }
                                 if (a[3].equals(max_distance)) {
                                     try {
@@ -89,12 +90,12 @@ public class CommandListener implements TabExecutor {
                                             throw new Exception("");
                                         }
                                         config.max_distance = d;
-                                        s.sendMessage("§a" + max_distance + "を" + a[4] + "にしました");
+                                        s.sendMessage("§a" + max_distance + "を" + config.max_distance + "にしました");
                                         return true;
                                     } catch (Exception e) {
-                                        s.sendMessage("/lead config set main " + max_distance + " 数値 (0以上) ");
+                                        s.sendMessage("§c/lead config set main " + max_distance + " 数値 (0以上) ");
+                                        return true;
                                     }
-                                    return true;
                                 }
                                 if (a[3].equals(force_teleport_distance)) {
                                     try {
@@ -103,77 +104,65 @@ public class CommandListener implements TabExecutor {
                                             throw new Exception("");
                                         }
                                         config.force_teleport_distance = d;
-                                        s.sendMessage("§a" + force_teleport_distance + "を" + d + "にしました");
+                                        s.sendMessage("§a" + force_teleport_distance + "を" + config.force_teleport_distance + "にしました");
                                         return true;
                                     } catch (Exception e) {
-                                        s.sendMessage("/lead config set main " + force_teleport_distance + " 数値 (0以上) ");
+                                        s.sendMessage("§c/lead config set main " + force_teleport_distance + " 数値 (0以上) ");
+                                        return true;
                                     }
-                                    return true;
                                 }
-                                s.sendMessage("コンフィグの値を変更するとき");
-                                s.sendMessage("--" + holder_power + "/" + target_power + "/" + max_distance + "/" + force_teleport_distance + "--");
-                                s.sendMessage("§a/lead config set main " + holder_power + "/" + target_power + "/" + max_distance + "/" + force_teleport_distance + " 数値（0以上) ");
+                                s.sendMessage("§c/lead help" + " で使い方を参照してください");
                                 return true;
                             }
                             if (a[2].equals("extra")) {
                                 if (a[3].equals(lead_only_player)) {
                                     try {
                                         config.lead_only_player = Boolean.parseBoolean(a[4]);
-                                        s.sendMessage("§a" + lead_only_player + "を" + a[4] + "にしました");
+                                        s.sendMessage("§a" + lead_only_player + "を" + config.lead_only_player + "にしました");
                                         return true;
                                     } catch (Exception e) {
-                                        s.sendMessage("/lead config set extra " + lead_only_player + " true or false ");
+                                        s.sendMessage("§c/lead config set extra " + lead_only_player + " true or false ");
+                                        return true;
                                     }
-                                    return true;
                                 }
                                 if (a[3].equals(possessive_mode)) {
                                     try {
                                         config.possessive_mode = Boolean.parseBoolean(a[4]);
-                                        s.sendMessage("§a" + possessive_mode + "を" + a[4] + "にしました");
+                                        s.sendMessage("§a" + possessive_mode + "を" + config.possessive_mode + "にしました");
                                         return true;
                                     } catch (Exception e) {
-                                        s.sendMessage("/lead config set extra " + possessive_mode + " true or false ");
+                                        s.sendMessage("§c/lead config set extra " + possessive_mode + " true or false ");
+                                        return true;
                                     }
-                                    return true;
                                 }
                                 if (a[3].equals(particle_mode)) {
                                     try {
                                         config.particle_mode = Boolean.parseBoolean(a[4]);
-                                        s.sendMessage("§a" + particle_mode + "を" + a[4] + "にしました");
+                                        s.sendMessage("§a" + particle_mode + "を" + config.particle_mode + "にしました");
                                         return true;
                                     } catch (Exception e) {
-                                        s.sendMessage("/lead config set extra " + particle_mode + " true or false ");
+                                        s.sendMessage("§c/lead config set extra " + particle_mode + " true or false ");
+                                        return true;
                                     }
-                                    return true;
                                 }
                                 if (a[3].equals(particle_type)) {
                                     try {
                                         if (!config.setParticleType(a[4])) {
                                             throw new Exception("");
                                         }
-                                        s.sendMessage("§a" + particle_type + "を" + a[4] + "にしました");
+                                        s.sendMessage("§a" + particle_type + "を" + config.particle + "にしました");
                                         return true;
                                     } catch (Exception e) {
-                                        s.sendMessage("/lead config set extra " + particle_type + " Particle");
+                                        s.sendMessage("§c/lead config set extra " + particle_type + " Particle");
+                                        return true;
                                     }
-                                    return true;
                                 }
-                                s.sendMessage("コンフィグの値を変更するとき");
-                                s.sendMessage("--" + lead_only_player + "/" + possessive_mode + "/" + particle_mode + "--");
-                                s.sendMessage("§a/lead config set extra " + lead_only_player + "/" + possessive_mode + "/" + particle_mode +  " true or false ");
-                                s.sendMessage("--" + particle_type +  "--");
-                                s.sendMessage("§a/lead config set extra " + particle_type + " Particle");
+                                s.sendMessage("§c/lead help" + " で使い方を参照してください");
                                 return true;
                             }
                         }
                     } catch (Exception ignored) {
-                        s.sendMessage("コンフィグの値を変更するとき");
-                        s.sendMessage("--" + holder_power + ", " + target_power + ", " + max_distance + ", " + force_teleport_distance + "--");
-                        s.sendMessage("§a/lead config set main 項目名 数値（0以上) ");
-                        s.sendMessage("--" + lead_only_player + ", " + possessive_mode + ", " + particle_mode + "--");
-                        s.sendMessage("§a/lead config set extra 項目名 true or false ");
-                        s.sendMessage("--" + particle_type +  "--");
-                        s.sendMessage("§a/lead config set extra  項目名 Particle");
+                        s.sendMessage("§c/lead help" + " で使い方を参照してください");
                         return true;
                     }
                 }
@@ -191,9 +180,11 @@ public class CommandListener implements TabExecutor {
                     return true;
                 }
             } catch (Exception ignored) {
+                s.sendMessage("§c/lead help" + " で使い方を参照してください");
+                return true;
             }
         }
-        s.sendMessage("/lead help" + " で使い方を参照してください");
+        s.sendMessage("§c/lead help" + " で使い方を参照してください");
         return true;
     }
 

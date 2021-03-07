@@ -94,7 +94,8 @@ public final class LeadPlugin extends JavaPlugin {
 
     private double calcPower(double diff, boolean isHolder) {
         double power = isHolder ? config.holder_power : config.target_power;
-        return (power * diff) > 10 ? 10 : (power * diff);
+        double d = config.max_distance > 0 ? config.max_distance : 1;
+        return  d > diff ? power : (power * (diff / d)) > 10 ? 10 : (power * (diff / d));
     }
 
     private void pull(LivingEntity h, LivingEntity t, double power) {
