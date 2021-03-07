@@ -98,9 +98,15 @@ public final class LeadPlugin extends JavaPlugin {
     }
 
     private void pull(LivingEntity h, LivingEntity t, double power) {
+        if(power <= 0) {
+            return;
+        }
         Vector hv = h.getLocation().toVector();
         Vector tv = t.getLocation().toVector();
         Vector velocity = hv.subtract(tv).normalize().multiply(power);
+        if(t.getVelocity().length() > velocity.length()) {
+            return;
+        }
         t.setVelocity(t.getVelocity().add(velocity));
     }
 
