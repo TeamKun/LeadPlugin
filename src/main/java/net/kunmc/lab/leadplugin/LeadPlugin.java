@@ -101,7 +101,7 @@ public final class LeadPlugin extends JavaPlugin {
         Vector hv = h.getLocation().toVector();
         Vector tv = t.getLocation().toVector();
         Vector velocity = hv.subtract(tv).normalize().multiply(power);
-        t.setVelocity(velocity);
+        t.setVelocity(t.getVelocity().add(velocity));
     }
 
     private void setParticle(PlayerInfo hInfo, PlayerInfo tInfo) {

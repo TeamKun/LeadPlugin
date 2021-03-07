@@ -49,7 +49,6 @@ public class CommandListener implements TabExecutor {
                             return true;
                         }
                     } catch (Exception ignored) {
-                        s.sendMessage("/lead config show");
                         return true;
                     }
                     try {
@@ -111,6 +110,10 @@ public class CommandListener implements TabExecutor {
                                     }
                                     return true;
                                 }
+                                s.sendMessage("コンフィグの値を変更するとき");
+                                s.sendMessage("--" + holder_power + "/" + target_power + "/" + max_distance + "/" + force_teleport_distance + "--");
+                                s.sendMessage("§a/lead config set main " + holder_power + "/" + target_power + "/" + max_distance + "/" + force_teleport_distance + " 数値（0以上) ");
+                                return true;
                             }
                             if (a[2].equals("extra")) {
                                 if (a[3].equals(lead_only_player)) {
@@ -155,22 +158,50 @@ public class CommandListener implements TabExecutor {
                                     }
                                     return true;
                                 }
+                                s.sendMessage("コンフィグの値を変更するとき");
+                                s.sendMessage("--" + lead_only_player + "/" + possessive_mode + "/" + particle_mode + "--");
+                                s.sendMessage("§a/lead config set extra " + lead_only_player + "/" + possessive_mode + "/" + particle_mode +  " true or false ");
+                                s.sendMessage("--" + particle_type +  "--");
+                                s.sendMessage("§a/lead config set extra " + particle_type + " Particle");
+                                return true;
                             }
                         }
                     } catch (Exception ignored) {
+                        s.sendMessage("コンフィグの値を変更するとき");
+                        s.sendMessage("--" + holder_power + ", " + target_power + ", " + max_distance + ", " + force_teleport_distance + "--");
+                        s.sendMessage("§a/lead config set main 項目名 数値（0以上) ");
+                        s.sendMessage("--" + lead_only_player + ", " + possessive_mode + ", " + particle_mode + "--");
+                        s.sendMessage("§a/lead config set extra 項目名 true or false ");
+                        s.sendMessage("--" + particle_type +  "--");
+                        s.sendMessage("§a/lead config set extra  項目名 Particle");
+                        return true;
                     }
+                }
+                if(a[0].equals("help")) {
+                    s.sendMessage("--使い方--");
+                    s.sendMessage("コンフィグの値を閲覧するとき");
+                    s.sendMessage("§a/lead config show");
+                    s.sendMessage("コンフィグの値を変更するとき");
+                    s.sendMessage("--" + holder_power + ", " + target_power + ", " + max_distance + ", " + force_teleport_distance + "--");
+                    s.sendMessage("§a/lead config set main 項目名 数値（0以上) ");
+                    s.sendMessage("--" + lead_only_player + ", " + possessive_mode + ", " + particle_mode + "--");
+                    s.sendMessage("§a/lead config set extra 項目名 true or false ");
+                    s.sendMessage("--" + particle_type +  "--");
+                    s.sendMessage("§a/lead config set extra  項目名 Particle");
+                    return true;
                 }
             } catch (Exception ignored) {
             }
         }
-        return false;
+        s.sendMessage("/lead help" + " で使い方を参照してください");
+        return true;
     }
 
     @Override
     public List<String> onTabComplete(CommandSender s, Command c, String l, String[] a) {
         if(c.getName().equals("lead")) {
             if(a.length == 1) {
-                return Stream.of("config").filter(e -> e.startsWith(a[0])).collect(Collectors.toList());
+                return Stream.of("config", "help").filter(e -> e.startsWith(a[0])).collect(Collectors.toList());
             }
             if(a.length == 2 && a[0].equals("config")) {
                 return Stream.of("show", "set").filter(e -> e.startsWith(a[1])).collect(Collectors.toList());
